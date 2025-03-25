@@ -46,7 +46,7 @@ class ProjectManager: ObservableObject {
                 "name": project.name,
                 "createdAt": project.createdAt.timeIntervalSince1970,
                 "updatedAt": project.updatedAt.timeIntervalSince1970,
-                "prompt": project.prompt,
+                "prompt": project.prompt ?? "",
                 "aiStyle": project.aiStyle
             ]
             

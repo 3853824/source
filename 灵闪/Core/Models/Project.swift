@@ -17,7 +17,7 @@ final class Project {
     var updatedAt: Date
     var canvasData: Data?
     var generatedImageData: Data?
-    var prompt: String
+    var prompt: String?
     var aiStyle: String
     var isFavorite: Bool
     

@@ -14,6 +14,14 @@ struct AIGenerationView: View {
     @State private var selectedStyle: AIStyle = .realistic
     @State private var prompt: String = ""
     
+    // 构造函数，用于接收外部传入的prompt
+    init(inputImage: Binding<UIImage?>, externalPrompt: String? = nil) {
+        self._inputImage = inputImage
+        if let externalPrompt = externalPrompt {
+            self._prompt = State(initialValue: externalPrompt)
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 12) {
             if isGenerating {
@@ -40,45 +48,51 @@ struct AIGenerationView: View {
                     .font(.headline)
                     .foregroundColor(.gray)
             }
-            
-            Divider()
-            
-            VStack(alignment: .leading) {
-                Text("AI风格")
-                    .font(.headline)
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(AIStyle.allCases, id: \.self) { style in
-                            StyleButton(style: style, selectedStyle: $selectedStyle)
-                        }
-                    }
-                    .padding(.vertical, 5)
-                }
-                
-                TextField("添加提示词引导AI创作...", text: $prompt)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                    .padding(.top, 5)
-            }
-            .padding(.horizontal)
         }
-        .onChange(of: inputImage) { _, _ in
-            generateImage()
+        .onAppear {
+            // 初始加载时生成图像
+            if inputImage != nil {
+                generateImageAsync()
+            }
+        }
+        .onChange(of: inputImage) { _, newValue in
+            // 使用Task处理状态更新
+            if newValue != nil {
+                generateImageAsync()
+            }
         }
         .onChange(of: selectedStyle) { _, _ in
-            generateImage()
+            generateImageAsync()
         }
         .onChange(of: prompt) { _, _ in
-            // 可以添加防抖动逻辑，避免每次输入都触发生成
-            // 这里简化处理，实际应用中应该添加延迟
-            generateImage()
+            generateImageAsync()
+        }
+    }
+    
+    private func generateImageAsync() {
+        Task { @MainActor in
+            guard let inputImage = inputImage else { return }
+            
+            // 避免重复触发生成
+            if isGenerating { return }
+            
+            // 模拟AI生成过程
+            isGenerating = true
+            
+            // 模拟异步操作
+            try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5秒
+            
+            // 模拟生成结果，实际应用中应替换为真实AI生成
+            self.generatedImage = inputImage
+            self.isGenerating = false
         }
     }
     
     private func generateImage() {
         guard let inputImage = inputImage else { return }
+        
+        // 避免重复触发生成
+        if isGenerating { return }
         
         // 模拟AI生成过程
         isGenerating = true

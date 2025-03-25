@@ -16,8 +16,38 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "174"
             endingLineNumber = "174"
-            landmarkName = "printProject()"
-            landmarkType = "7">
+            landmarkName = "ContentView"
+            landmarkType = "14">
+            <Locations>
+               <Location
+                  uuid = "08FD64B9-F7A2-4610-A3D8-2F7A6AE5F784 - b953da57b7a95abf"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "&#x7075;&#x95ea;.ContentView.printProject() -&gt; ()"
+                  moduleName = "&#x7075;&#x95ea;.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mandel/Desktop/%E7%81%B5%E9%97%AA/%E7%81%B5%E9%97%AA/ContentView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "174"
+                  endingLineNumber = "174">
+               </Location>
+               <Location
+                  uuid = "08FD64B9-F7A2-4610-A3D8-2F7A6AE5F784 - 4c25d176cb7368d2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "&#x7075;&#x95ea;.ContentView.updateProjectName() -&gt; ()"
+                  moduleName = "&#x7075;&#x95ea;.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mandel/Desktop/%E7%81%B5%E9%97%AA/%E7%81%B5%E9%97%AA/ContentView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "175"
+                  endingLineNumber = "175">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

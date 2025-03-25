@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import Combine
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -19,6 +20,7 @@ struct ContentView: View {
     @State private var generatedImage: UIImage?
     @State private var projectName: String
     @State private var showingProjectMenu = false
+    @State private var prompt: String = ""
     
     // 由HomeView传入的项目
     var selectedProject: Project
@@ -29,6 +31,7 @@ struct ContentView: View {
     init(selectedProject: Project, onDismiss: (() -> Void)? = nil) {
         self.selectedProject = selectedProject
         self._projectName = State(initialValue: selectedProject.name)
+        self._prompt = State(initialValue: selectedProject.prompt ?? "")
         
         // 检查是否为新创建的项目
         if selectedProject.canvasImage == nil && selectedProject.generatedImage == nil {
@@ -60,14 +63,30 @@ struct ContentView: View {
                 
                 Spacer()
                 
+                // 简化的提示词输入框，直接放在顶部中间
+                TextField("添加提示词引导AI创作...", text: $prompt)
+                    .padding(8)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                    .frame(maxWidth: 280)
+                
+                Spacer()
+                
                 // 布局切换按钮
-                ForEach(LayoutMode.allCases) { mode in
-                    Button(action: {
-                        layoutManager.setLayout(mode)
-                    }) {
-                        Image(systemName: mode.icon)
-                            .foregroundColor(layoutManager.currentLayout == mode ? .blue : .gray)
-                            .frame(width: 36, height: 36)
+                HStack(spacing: 8) {
+                    ForEach(LayoutMode.allCases) { mode in
+                        Button(action: {
+                            layoutManager.setLayout(mode)
+                        }) {
+                            Image(systemName: mode.icon)
+                                .font(.system(size: 20))
+                                .foregroundColor(layoutManager.currentLayout == mode ? .blue : .gray)
+                                .padding(8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(layoutManager.currentLayout == mode ? Color.blue.opacity(0.2) : Color.clear)
+                                )
+                        }
                     }
                 }
                 
@@ -78,7 +97,7 @@ struct ContentView: View {
                 .padding(.leading, 4)
             }
             .padding(.horizontal)
-            .padding(.top, 8)
+            .padding(.vertical, 8)
             
             // 主内容区域
             GeometryReader { geometry in
@@ -95,8 +114,11 @@ struct ContentView: View {
                         Divider()
                         
                         // 右侧AI生成
-                        AIGenerationView(inputImage: $canvasImage)
-                            .frame(width: geometry.size.width * (1 - layoutManager.canvasRatio))
+                        AIGenerationView(
+                            inputImage: $canvasImage,
+                            externalPrompt: prompt
+                        )
+                        .frame(width: geometry.size.width * (1 - layoutManager.canvasRatio))
                     }
                 case .fullCanvasWithPreview:
                     ZStack {
@@ -111,12 +133,15 @@ struct ContentView: View {
                             Spacer()
                             HStack {
                                 Spacer()
-                                AIGenerationView(inputImage: $canvasImage)
-                                    .frame(width: 200, height: 250)
-                                    .background(Color(.systemBackground))
-                                    .cornerRadius(12)
-                                    .shadow(radius: 5)
-                                    .padding()
+                                AIGenerationView(
+                                    inputImage: $canvasImage,
+                                    externalPrompt: prompt
+                                )
+                                .frame(width: 200, height: 250)
+                                .background(Color(.systemBackground))
+                                .cornerRadius(12)
+                                .shadow(radius: 5)
+                                .padding()
                             }
                         }
                     }
@@ -159,6 +184,12 @@ struct ContentView: View {
         if let generatedImage = generatedImage {
             selectedProject.setGeneratedImage(generatedImage)
         }
+        
+        // 保存提示词 - 简化逻辑
+        selectedProject.prompt = prompt
+        
+        // 更新时间戳
+        selectedProject.updatedAt = Date()
     }
     
     private func updateCurrentProject() {

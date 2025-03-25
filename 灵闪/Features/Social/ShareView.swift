@@ -30,8 +30,8 @@ struct ShareView: View {
                     Text("作品名称: \(project.name)")
                         .font(.headline)
                     
-                    if !project.prompt.isEmpty {
-                        Text("提示词: \(project.prompt)")
+                    if let prompt = project.prompt, !prompt.isEmpty {
+                        Text("提示词: \(prompt)")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
