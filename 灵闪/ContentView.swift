@@ -110,7 +110,9 @@ struct ContentView: View {
                             updateCurrentProject()
                         })
                         .frame(width: geometry.size.width * layoutManager.canvasRatio)
+                        .contentShape(Rectangle()) // 确保整个区域可响应点击
                         
+                        // 只保留中间分割线
                         Divider()
                         
                         // 右侧AI生成
@@ -119,7 +121,11 @@ struct ContentView: View {
                             externalPrompt: prompt
                         )
                         .frame(width: geometry.size.width * (1 - layoutManager.canvasRatio))
+                        .contentShape(Rectangle())
                     }
+                    // 移除整体的填充
+                    .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
+                    
                 case .fullCanvasWithPreview:
                     ZStack {
                         // 全屏画布
@@ -127,6 +133,8 @@ struct ContentView: View {
                             canvasImage = image
                             updateCurrentProject()
                         })
+                        .contentShape(Rectangle()) // 确保整个区域可响应点击
+                        .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
                         
                         // 右下角预览窗口
                         VStack {
@@ -141,13 +149,14 @@ struct ContentView: View {
                                 .background(Color(.systemBackground))
                                 .cornerRadius(12)
                                 .shadow(radius: 5)
-                                .padding()
+                                .padding(16) // 仅保留适当的边距
                             }
                         }
                     }
                 }
             }
         }
+        .edgesIgnoringSafeArea([.bottom, .horizontal]) // 整个视图忽略安全区域
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
         .onAppear {

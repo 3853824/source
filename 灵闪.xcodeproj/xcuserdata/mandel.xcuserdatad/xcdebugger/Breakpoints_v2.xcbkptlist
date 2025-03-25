@@ -16,15 +16,15 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "174"
             endingLineNumber = "174"
-            landmarkName = "ContentView"
-            landmarkType = "14">
+            landmarkName = "body"
+            landmarkType = "24">
             <Locations>
                <Location
-                  uuid = "08FD64B9-F7A2-4610-A3D8-2F7A6AE5F784 - b953da57b7a95abf"
+                  uuid = "08FD64B9-F7A2-4610-A3D8-2F7A6AE5F784 - 33d78139cd212ec7"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "&#x7075;&#x95ea;.ContentView.printProject() -&gt; ()"
+                  symbolName = "&#x7075;&#x95ea;.ContentView.body.getter : some"
                   moduleName = "&#x7075;&#x95ea;.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/mandel/Desktop/%E7%81%B5%E9%97%AA/%E7%81%B5%E9%97%AA/ContentView.swift"
@@ -34,18 +34,18 @@
                   endingLineNumber = "174">
                </Location>
                <Location
-                  uuid = "08FD64B9-F7A2-4610-A3D8-2F7A6AE5F784 - 4c25d176cb7368d2"
+                  uuid = "08FD64B9-F7A2-4610-A3D8-2F7A6AE5F784 - 1072c9ba3eb4c22d"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "&#x7075;&#x95ea;.ContentView.updateProjectName() -&gt; ()"
+                  symbolName = "implicit closure #6 () -&gt; () in implicit closure #5 (&#x7075;&#x95ea;.ContentView) -&gt; () -&gt; () in closure #4 () -&gt; &lt;&lt;opaque return type of SwiftUI.View.presentationDetents(Swift.Set&lt;SwiftUI.PresentationDetent&gt;) -&gt; some&gt;&gt;.0 in &#x7075;&#x95ea;.ContentView.body.getter : some"
                   moduleName = "&#x7075;&#x95ea;.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/mandel/Desktop/%E7%81%B5%E9%97%AA/%E7%81%B5%E9%97%AA/ContentView.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "175"
-                  endingLineNumber = "175">
+                  startingLineNumber = "174"
+                  endingLineNumber = "174">
                </Location>
             </Locations>
          </BreakpointContent>
