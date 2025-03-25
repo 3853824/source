@@ -25,11 +25,18 @@ struct ContentView: View {
     // 由HomeView传入的项目
     var selectedProject: Project
     
+    // 返回回调
+    var onDismiss: (() -> Void)?
+    
     // 新创建的项目需要保存
     private var isNewProject: Bool = false
     
+    // 添加加载状态标记
+    @State private var isInitialLoading: Bool = true
+    
     init(selectedProject: Project, onDismiss: (() -> Void)? = nil) {
         self.selectedProject = selectedProject
+        self.onDismiss = onDismiss
         self._projectName = State(initialValue: selectedProject.name)
         self._prompt = State(initialValue: selectedProject.prompt ?? "")
         
@@ -47,7 +54,11 @@ struct ContentView: View {
                     Button(action: {
                         // 返回到主页
                         saveCurrentProject()
-                        presentationMode.wrappedValue.dismiss()
+                        if let dismiss = onDismiss {
+                            dismiss()
+                        } else {
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }) {
                         Image(systemName: "chevron.left")
                     }
@@ -116,12 +127,20 @@ struct ContentView: View {
                         Divider()
                         
                         // 右侧AI生成
-                        AIGenerationView(
-                            inputImage: $canvasImage,
-                            externalPrompt: prompt
-                        )
+                        ZStack {
+                            // 添加白色背景，确保不会看到下层视图
+                            Color.white
+                                .edgesIgnoringSafeArea(.all)
+                            
+                            AIGenerationView(
+                                inputImage: $canvasImage,
+                                externalPrompt: prompt
+                            )
+                        }
                         .frame(width: geometry.size.width * (1 - layoutManager.canvasRatio))
                         .contentShape(Rectangle())
+                        // 移除任何可能的边框或背景样式
+                        .background(Color.clear)
                     }
                     // 移除整体的填充
                     .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
@@ -141,14 +160,18 @@ struct ContentView: View {
                             Spacer()
                             HStack {
                                 Spacer()
-                                AIGenerationView(
-                                    inputImage: $canvasImage,
-                                    externalPrompt: prompt
-                                )
+                                ZStack {
+                                    // 白色背景
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.white)
+                                    
+                                    AIGenerationView(
+                                        inputImage: $canvasImage,
+                                        externalPrompt: prompt
+                                    )
+                                }
                                 .frame(width: 200, height: 250)
-                                .background(Color(.systemBackground))
-                                .cornerRadius(12)
-                                .shadow(radius: 5)
+                                .shadow(radius: 2) // 只保留轻微阴影
                                 .padding(16) // 仅保留适当的边距
                             }
                         }
@@ -179,6 +202,11 @@ struct ContentView: View {
     private func loadProject() {
         canvasImage = selectedProject.canvasImage
         generatedImage = selectedProject.generatedImage
+        
+        // 延迟设置加载完成，确保视图有足够时间初始化
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.isInitialLoading = false
+        }
     }
     
     private func updateProjectName() {

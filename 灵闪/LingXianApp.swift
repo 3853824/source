@@ -56,7 +56,10 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
 // 主视图结构，包含分栏导航
 struct MainView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var selectedItem: SidebarItem? = SidebarItem.home
+    @State private var showingContentView = false
+    @State private var selectedProject: Project?
     
     var body: some View {
         NavigationSplitView {
@@ -71,11 +74,17 @@ struct MainView: View {
             .navigationTitle("灵闪")
         } detail: {
             // 详情内容区域
-            NavigationStack {
+            ZStack {
                 if let selection = selectedItem {
                     switch selection {
                     case .home:
-                        HomeView()
+                        HomeView(onSelectProject: { project in
+                            self.selectedProject = project
+                            // 延迟一帧显示内容视图，避免同步更新问题
+                            DispatchQueue.main.async {
+                                self.showingContentView = true
+                            }
+                        })
                     case .favorites:
                         Text("收藏夹")
                             .font(.largeTitle)
@@ -87,10 +96,35 @@ struct MainView: View {
                     }
                 } else {
                     // 默认显示主页
-                    HomeView()
+                    HomeView(onSelectProject: { project in
+                        self.selectedProject = project
+                        // 延迟一帧显示内容视图，避免同步更新问题
+                        DispatchQueue.main.async {
+                            self.showingContentView = true
+                        }
+                    })
+                }
+                
+                // 使用全屏覆盖显示内容视图
+                if showingContentView, let project = selectedProject {
+                    ContentView(selectedProject: project, onDismiss: {
+                        self.showingContentView = false
+                    })
+                    .transition(.opacity)
+                    .zIndex(2) // 确保内容视图在最上层
                 }
             }
         }
         .navigationSplitViewStyle(.balanced)
+        .fullScreenCover(isPresented: $showingContentView, onDismiss: {
+            // 清除已选项目
+            self.selectedProject = nil
+        }) {
+            if let project = selectedProject {
+                ContentView(selectedProject: project, onDismiss: {
+                    self.showingContentView = false
+                })
+            }
+        }
     }
 } 

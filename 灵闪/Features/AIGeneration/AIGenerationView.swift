@@ -23,30 +23,35 @@ struct AIGenerationView: View {
     }
     
     var body: some View {
-        VStack(spacing: 12) {
-            if isGenerating {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle())
-                    .scaleEffect(1.5)
-                    .padding()
-                Text("AI正在创作中...")
-                    .font(.headline)
-            } else if let generatedImage = generatedImage {
-                Image(uiImage: generatedImage)
-                    .resizable()
-                    .scaledToFit()
-                    .cornerRadius(10)
-                    .shadow(radius: 3)
-            } else {
-                Image(systemName: "photo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-                    .foregroundColor(.gray)
-                    .opacity(0.5)
-                Text("等待绘画输入...")
-                    .font(.headline)
-                    .foregroundColor(.gray)
+        ZStack {
+            // 透明背景，确保不会有任何边框
+            Color.clear
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 12) {
+                if isGenerating {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                        .padding()
+                    Text("AI正在创作中...")
+                        .font(.headline)
+                } else if let generatedImage = generatedImage {
+                    Image(uiImage: generatedImage)
+                        .resizable()
+                        .scaledToFit()
+                        // 不使用圆角和阴影
+                } else {
+                    Image(systemName: "photo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 100, height: 100)
+                        .foregroundColor(.gray)
+                        .opacity(0.5)
+                    Text("等待绘画输入...")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                }
             }
         }
         .onAppear {
