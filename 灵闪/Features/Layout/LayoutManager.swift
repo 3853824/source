@@ -10,7 +10,6 @@ import SwiftUI
 enum LayoutMode: String, CaseIterable, Identifiable {
     case splitScreen = "splitScreen"
     case fullCanvasWithPreview = "fullCanvasWithPreview"
-    case fullPreviewWithCanvas = "fullPreviewWithCanvas"
     
     var id: String { self.rawValue }
     
@@ -18,7 +17,6 @@ enum LayoutMode: String, CaseIterable, Identifiable {
         switch self {
         case .splitScreen: return "分屏模式"
         case .fullCanvasWithPreview: return "画板全屏"
-        case .fullPreviewWithCanvas: return "预览全屏"
         }
     }
     
@@ -26,7 +24,6 @@ enum LayoutMode: String, CaseIterable, Identifiable {
         switch self {
         case .splitScreen: return "rectangle.split.2x1"
         case .fullCanvasWithPreview: return "rectangle.inset.bottomright"
-        case .fullPreviewWithCanvas: return "rectangle.inset.bottomleft"
         }
     }
 }
@@ -40,8 +37,6 @@ class LayoutManager: ObservableObject {
         case .splitScreen:
             currentLayout = .fullCanvasWithPreview
         case .fullCanvasWithPreview:
-            currentLayout = .fullPreviewWithCanvas
-        case .fullPreviewWithCanvas:
             currentLayout = .splitScreen
         }
     }

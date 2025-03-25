@@ -10,6 +10,7 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.presentationMode) private var presentationMode
     
     @StateObject private var layoutManager = LayoutManager()
     @StateObject private var aiService = AIService()
@@ -22,155 +23,122 @@ struct ContentView: View {
     // 由HomeView传入的项目
     var selectedProject: Project
     
-    // 返回到HomeView的回调函数
-    var onDismiss: (() -> Void)?
+    // 新创建的项目需要保存
+    private var isNewProject: Bool = false
     
     init(selectedProject: Project, onDismiss: (() -> Void)? = nil) {
         self.selectedProject = selectedProject
         self._projectName = State(initialValue: selectedProject.name)
-        self.onDismiss = onDismiss
+        
+        // 检查是否为新创建的项目
+        if selectedProject.canvasImage == nil && selectedProject.generatedImage == nil {
+            self.isNewProject = true
+        }
     }
 
     var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                // 顶部导航栏
-                HStack {
-                    HStack(spacing: 4) {
-                        Button(action: {
-                            // 返回到主页
-                            saveCurrentProject()
-                            if let onDismiss = onDismiss {
-                                onDismiss()
-                            }
-                        }) {
-                            Image(systemName: "chevron.left")
-                        }
-                        
-                        Button(action: {
-                            showingProjectMenu = true
-                        }) {
-                            Text(projectName)
-                                .font(.headline)
-                                .lineLimit(1)
-                        }
+        VStack(spacing: 0) {
+            // 顶部导航栏
+            HStack {
+                HStack(spacing: 4) {
+                    Button(action: {
+                        // 返回到主页
+                        saveCurrentProject()
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
                     }
                     
-                    Spacer()
-                    
-                    // 清空画板按钮
-                    Button(action: clearCanvas) {
-                        Image(systemName: "trash")
+                    Button(action: {
+                        showingProjectMenu = true
+                    }) {
+                        Text(projectName)
+                            .font(.headline)
+                            .lineLimit(1)
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top, 8)
                 
-                // 布局切换器
-                LayoutSwitcherView(layoutManager: layoutManager)
-                    .padding(.horizontal)
-                    .padding(.top, 4)
+                Spacer()
                 
-                // 主内容区域
-                mainContentView
-                    .sheet(isPresented: $showingProjectMenu) {
-                        ProjectMenuView(projectName: $projectName, 
-                                       onRename: updateProjectName,
-                                       onExport: exportAsPDF,
-                                       onPrint: printProject)
-                            .presentationDetents([.medium])
+                // 布局切换按钮
+                ForEach(LayoutMode.allCases) { mode in
+                    Button(action: {
+                        layoutManager.setLayout(mode)
+                    }) {
+                        Image(systemName: mode.icon)
+                            .foregroundColor(layoutManager.currentLayout == mode ? .blue : .gray)
+                            .frame(width: 36, height: 36)
                     }
+                }
+                
+                // 清空画板按钮
+                Button(action: clearCanvas) {
+                    Image(systemName: "trash")
+                }
+                .padding(.leading, 4)
             }
-            .ignoresSafeArea(.keyboard)
+            .padding(.horizontal)
+            .padding(.top, 8)
+            
+            // 主内容区域
+            GeometryReader { geometry in
+                switch layoutManager.currentLayout {
+                case .splitScreen:
+                    HStack(spacing: 0) {
+                        // 左侧画布
+                        CanvasView(canvasImage: $canvasImage, onDrawingChanged: { image in
+                            canvasImage = image
+                            updateCurrentProject()
+                        })
+                        .frame(width: geometry.size.width * layoutManager.canvasRatio)
+                        
+                        Divider()
+                        
+                        // 右侧AI生成
+                        AIGenerationView(inputImage: $canvasImage)
+                            .frame(width: geometry.size.width * (1 - layoutManager.canvasRatio))
+                    }
+                case .fullCanvasWithPreview:
+                    ZStack {
+                        // 全屏画布
+                        CanvasView(canvasImage: $canvasImage, onDrawingChanged: { image in
+                            canvasImage = image
+                            updateCurrentProject()
+                        })
+                        
+                        // 右下角预览窗口
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Spacer()
+                                AIGenerationView(inputImage: $canvasImage)
+                                    .frame(width: 200, height: 250)
+                                    .background(Color(.systemBackground))
+                                    .cornerRadius(12)
+                                    .shadow(radius: 5)
+                                    .padding()
+                            }
+                        }
+                    }
+                }
+            }
         }
-        .background(Color(.systemBackground).ignoresSafeArea())
-        .toolbar(.hidden)
+        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
         .onAppear {
+            print("ContentView appeared - Project: \(projectName)")
             loadProject()
         }
-    }
-    
-    // 拆分主内容视图
-    private var mainContentView: some View {
-        ZStack {
-            switch layoutManager.currentLayout {
-            case .splitScreen:
-                splitScreenView
-            case .fullCanvasWithPreview:
-                fullCanvasWithPreviewView
-            case .fullPreviewWithCanvas:
-                fullPreviewWithCanvasView
-            }
+        .onDisappear {
+            print("ContentView disappeared - Saving project: \(projectName)")
+            saveCurrentProject()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    // 分屏模式视图
-    private var splitScreenView: some View {
-        HStack(spacing: 0) {
-            // 左侧画布
-            CanvasView(canvasImage: $canvasImage, onDrawingChanged: { image in
-                canvasImage = image
-                updateCurrentProject()
-            })
-            .frame(width: UIScreen.main.bounds.width * layoutManager.canvasRatio)
-            
-            Divider()
-            
-            // 右侧AI生成
-            AIGenerationView(inputImage: $canvasImage)
-                .frame(width: UIScreen.main.bounds.width * (1 - layoutManager.canvasRatio))
-        }
-    }
-    
-    // 全屏画布模式视图
-    private var fullCanvasWithPreviewView: some View {
-        ZStack {
-            // 全屏画布
-            CanvasView(canvasImage: $canvasImage, onDrawingChanged: { image in
-                canvasImage = image
-                updateCurrentProject()
-            })
-            
-            // 右下角预览窗口
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    AIGenerationView(inputImage: $canvasImage)
-                        .frame(width: 200, height: 250)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(radius: 5)
-                        .padding()
-                }
-            }
-        }
-    }
-    
-    // 全屏预览模式视图
-    private var fullPreviewWithCanvasView: some View {
-        ZStack {
-            // 全屏AI生成
-            AIGenerationView(inputImage: $canvasImage)
-            
-            // 左下角画布窗口
-            VStack {
-                Spacer()
-                HStack {
-                    CanvasView(canvasImage: $canvasImage, onDrawingChanged: { image in
-                        canvasImage = image
-                        updateCurrentProject()
-                    })
-                    .frame(width: 200, height: 250)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(radius: 5)
-                    .padding()
-                    
-                    Spacer()
-                }
-            }
+        .sheet(isPresented: $showingProjectMenu) {
+            ProjectMenuView(projectName: $projectName, 
+                           onRename: updateProjectName,
+                           onExport: exportAsPDF,
+                           onPrint: printProject)
+                .presentationDetents([.medium])
         }
     }
     
