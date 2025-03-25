@@ -24,9 +24,9 @@ enum LayoutMode: String, CaseIterable, Identifiable {
     
     var icon: String {
         switch self {
-        case .splitScreen: return "dock.left.and.right"
-        case .fullCanvasWithPreview: return "rectangle.leftthird.inset.filled"
-        case .fullPreviewWithCanvas: return "rectangle.rightthird.inset.filled"
+        case .splitScreen: return "rectangle.split.2x1"
+        case .fullCanvasWithPreview: return "rectangle.inset.bottomright"
+        case .fullPreviewWithCanvas: return "rectangle.inset.bottomleft"
         }
     }
 }

@@ -30,62 +30,61 @@ struct ContentView: View {
         self._projectName = State(initialValue: selectedProject.name)
         self.onDismiss = onDismiss
     }
-    
+
     var body: some View {
-        VStack(spacing: 0) {
-            // 布局切换器
-            LayoutSwitcherView(layoutManager: layoutManager)
-                .padding(.horizontal)
-                .padding(.top, 8)
-            
-            // 主内容区域
-            mainContentView
-                .sheet(isPresented: $showingProjectMenu) {
-                    ProjectMenuView(projectName: $projectName, 
-                                   onRename: updateProjectName,
-                                   onExport: exportAsPDF,
-                                   onPrint: printProject)
-                        .presentationDetents([.medium])
-                }
-        }
-        .navigationBarBackButtonHidden(true) // 隐藏默认返回按钮
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                HStack(spacing: 4) {
-                    Button(action: {
-                        // 返回到主页
-                        saveCurrentProject()
-                        if let onDismiss = onDismiss {
-                            onDismiss()
+        ZStack {
+            VStack(spacing: 0) {
+                // 顶部导航栏
+                HStack {
+                    HStack(spacing: 4) {
+                        Button(action: {
+                            // 返回到主页
+                            saveCurrentProject()
+                            if let onDismiss = onDismiss {
+                                onDismiss()
+                            }
+                        }) {
+                            Image(systemName: "chevron.left")
                         }
-                    }) {
-                        Image(systemName: "chevron.left")
+                        
+                        Button(action: {
+                            showingProjectMenu = true
+                        }) {
+                            Text(projectName)
+                                .font(.headline)
+                                .lineLimit(1)
+                        }
                     }
                     
-                    Button(action: {
-                        showingProjectMenu = true
-                    }) {
-                        Text(projectName)
-                            .font(.headline)
-                            .lineLimit(1)
+                    Spacer()
+                    
+                    // 清空画板按钮
+                    Button(action: clearCanvas) {
+                        Image(systemName: "trash")
                     }
                 }
-            }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    // 删除功能
-                    saveCurrentProject()
-                    modelContext.delete(selectedProject)
-                    if let onDismiss = onDismiss {
-                        onDismiss()
+                .padding(.horizontal)
+                .padding(.top, 8)
+                
+                // 布局切换器
+                LayoutSwitcherView(layoutManager: layoutManager)
+                    .padding(.horizontal)
+                    .padding(.top, 4)
+                
+                // 主内容区域
+                mainContentView
+                    .sheet(isPresented: $showingProjectMenu) {
+                        ProjectMenuView(projectName: $projectName, 
+                                       onRename: updateProjectName,
+                                       onExport: exportAsPDF,
+                                       onPrint: printProject)
+                            .presentationDetents([.medium])
                     }
-                }) {
-                    Image(systemName: "trash")
-                }
             }
+            .ignoresSafeArea(.keyboard)
         }
+        .background(Color(.systemBackground).ignoresSafeArea())
+        .toolbar(.hidden)
         .onAppear {
             loadProject()
         }
@@ -207,6 +206,21 @@ struct ContentView: View {
     private func printProject() {
         // 打印功能实现
         print("打印项目")
+    }
+    
+    // 添加清空画布功能
+    private func clearCanvas() {
+        // 替代方案：使用空白的UIImage作为中间媒介重置绘图
+        let size = CGSize(width: 100, height: 100)
+        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+        let context = UIGraphicsGetCurrentContext()
+        context?.setFillColor(UIColor.white.cgColor)
+        context?.fill(CGRect(origin: .zero, size: size))
+        let blankImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        self.canvasImage = blankImage
+        updateCurrentProject()
     }
 }
 

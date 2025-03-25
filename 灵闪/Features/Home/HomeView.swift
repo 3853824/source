@@ -28,84 +28,87 @@ struct HomeView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // 项目网格
-            ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 260))], spacing: 20) {
-                    ForEach(filteredProjects) { project in
-                        ProjectCard(project: project)
-                            .contextMenu {
-                                Button {
-                                    contextMenuProject = project
-                                    newProjectName = project.name
-                                    isShowingRenameAlert = true
-                                } label: {
-                                    Label("重命名", systemImage: "pencil")
-                                }
-                                
-                                Button {
-                                    // 添加到收藏
-                                    // 此功能待实现
-                                } label: {
-                                    Label("收藏", systemImage: "heart")
-                                }
-                                
-                                Button {
-                                    duplicateProject(project)
-                                } label: {
-                                    Label("复制", systemImage: "doc.on.doc")
-                                }
-                                
-                                Button {
-                                    // 分享功能
-                                    // 此功能待实现
-                                } label: {
-                                    Label("分享", systemImage: "square.and.arrow.up")
-                                }
-                                
-                                Divider()
-                                
-                                Button(role: .destructive) {
-                                    deleteProject(project)
-                                } label: {
-                                    Label("删除", systemImage: "trash")
-                                }
+        ZStack {
+            // 主视图
+            if !isShowingProjectView {
+                VStack(spacing: 0) {
+                    // 项目网格
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 260))], spacing: 20) {
+                            ForEach(filteredProjects) { project in
+                                ProjectCard(project: project)
+                                    .contextMenu {
+                                        Button {
+                                            contextMenuProject = project
+                                            newProjectName = project.name
+                                            isShowingRenameAlert = true
+                                        } label: {
+                                            Label("重命名", systemImage: "pencil")
+                                        }
+                                        
+                                        Button {
+                                            // 添加到收藏
+                                            // 此功能待实现
+                                        } label: {
+                                            Label("收藏", systemImage: "heart")
+                                        }
+                                        
+                                        Button {
+                                            duplicateProject(project)
+                                        } label: {
+                                            Label("复制", systemImage: "doc.on.doc")
+                                        }
+                                        
+                                        Button {
+                                            // 分享功能
+                                            // 此功能待实现
+                                        } label: {
+                                            Label("分享", systemImage: "square.and.arrow.up")
+                                        }
+                                        
+                                        Divider()
+                                        
+                                        Button(role: .destructive) {
+                                            deleteProject(project)
+                                        } label: {
+                                            Label("删除", systemImage: "trash")
+                                        }
+                                    }
+                                    .onTapGesture {
+                                        openProject(project)
+                                    }
                             }
-                            .onTapGesture {
-                                openProject(project)
-                            }
+                        }
+                        .padding()
                     }
                 }
-                .padding()
-            }
-        }
-        .navigationTitle("所有看板")
-        .searchable(text: $searchText, prompt: "搜索项目")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: createAndOpenNewProject) {
-                    Image(systemName: "plus")
+                .navigationTitle("所有看板")
+                .searchable(text: $searchText, prompt: "搜索项目")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: createAndOpenNewProject) {
+                            Image(systemName: "plus")
+                        }
+                    }
                 }
-            }
-        }
-        .navigationDestination(isPresented: $isShowingProjectView) {
-            if let project = selectedProject {
+                .alert("重命名项目", isPresented: $isShowingRenameAlert) {
+                    TextField("项目名称", text: $newProjectName)
+                    Button("取消", role: .cancel) {}
+                    Button("确定") {
+                        if let project = contextMenuProject {
+                            renameProject(project, newName: newProjectName)
+                        }
+                    }
+                } message: {
+                    Text("请输入新的项目名称")
+                }
+            } else if let project = selectedProject {
+                // 项目视图
                 ContentView(selectedProject: project, onDismiss: {
                     isShowingProjectView = false
                     selectedProject = nil
                 })
             }
-        }
-        .alert("重命名项目", isPresented: $isShowingRenameAlert) {
-            TextField("项目名称", text: $newProjectName)
-            Button("取消", role: .cancel) {}
-            Button("确定") {
-                if let project = contextMenuProject {
-                    renameProject(project, newName: newProjectName)
-                }
-            }
-        } message: {
-            Text("请输入新的项目名称")
         }
     }
     

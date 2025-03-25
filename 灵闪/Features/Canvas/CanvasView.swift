@@ -24,16 +24,10 @@ struct CanvasView: View {
             .background(Color.white)
             .cornerRadius(10)
             .shadow(radius: 3)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: clearCanvas) {
-                        Label("清除", systemImage: "trash")
-                    }
-                }
-            }
     }
     
-    func clearCanvas() {
+    // 公开清空画布方法
+    public func clearCanvas() {
         canvasView.drawing = PKDrawing()
         if let onDrawingChanged = onDrawingChanged {
             let image = canvasView.drawing.image(from: canvasView.bounds, scale: UIScreen.main.scale)
