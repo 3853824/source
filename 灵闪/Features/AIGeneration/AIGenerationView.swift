@@ -13,10 +13,12 @@ struct AIGenerationView: View {
     @State private var isGenerating: Bool = false
     @State private var selectedStyle: AIStyle = .realistic
     @State private var prompt: String = ""
+    var isSmallPreview: Bool = false // 是否为小型预览窗口
     
     // 构造函数，用于接收外部传入的prompt
-    init(inputImage: Binding<UIImage?>, externalPrompt: String? = nil) {
+    init(inputImage: Binding<UIImage?>, externalPrompt: String? = nil, isSmallPreview: Bool = false) {
         self._inputImage = inputImage
+        self.isSmallPreview = isSmallPreview
         if let externalPrompt = externalPrompt {
             self._prompt = State(initialValue: externalPrompt)
         }
@@ -28,14 +30,17 @@ struct AIGenerationView: View {
             Color.clear
                 .edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 12) {
+            VStack(spacing: isSmallPreview ? 6 : 12) {
                 if isGenerating {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
-                        .scaleEffect(1.5)
-                        .padding()
-                    Text("AI正在创作中...")
-                        .font(.headline)
+                        .scaleEffect(isSmallPreview ? 1.0 : 1.5)
+                        .padding(isSmallPreview ? 8 : 16)
+                    
+                    if !isSmallPreview {
+                        Text("AI正在创作中...")
+                            .font(.headline)
+                    }
                 } else if let generatedImage = generatedImage {
                     Image(uiImage: generatedImage)
                         .resizable()
@@ -45,12 +50,15 @@ struct AIGenerationView: View {
                     Image(systemName: "photo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 100, height: 100)
+                        .frame(width: isSmallPreview ? 50 : 100, height: isSmallPreview ? 50 : 100)
                         .foregroundColor(.gray)
                         .opacity(0.5)
-                    Text("等待绘画输入...")
-                        .font(.headline)
-                        .foregroundColor(.gray)
+                    
+                    if !isSmallPreview {
+                        Text("等待绘画输入...")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                    }
                 }
             }
         }

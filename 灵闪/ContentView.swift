@@ -35,6 +35,7 @@ struct ContentView: View {
     @State private var isInitialLoading: Bool = true
     
     init(selectedProject: Project, onDismiss: (() -> Void)? = nil) {
+        print("ContentView.init - 项目: \(selectedProject.name), ID: \(selectedProject.id)")
         self.selectedProject = selectedProject
         self.onDismiss = onDismiss
         self._projectName = State(initialValue: selectedProject.name)
@@ -43,6 +44,7 @@ struct ContentView: View {
         // 检查是否为新创建的项目
         if selectedProject.canvasImage == nil && selectedProject.generatedImage == nil {
             self.isNewProject = true
+            print("ContentView.init - 这是一个新项目")
         }
     }
 
@@ -53,14 +55,22 @@ struct ContentView: View {
                 HStack(spacing: 4) {
                     Button(action: {
                         // 返回到主页
+                        print("ContentView - 返回按钮被点击")
                         saveCurrentProject()
                         if let dismiss = onDismiss {
+                            print("ContentView - 使用onDismiss回调返回")
                             dismiss()
                         } else {
+                            print("ContentView - 使用presentationMode返回")
                             presentationMode.wrappedValue.dismiss()
                         }
                     }) {
                         Image(systemName: "chevron.left")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                            .padding(10)
+                            .background(Color.blue.opacity(0.1))
+                            .clipShape(Circle())
                     }
                     
                     Button(action: {
@@ -83,99 +93,89 @@ struct ContentView: View {
                 
                 Spacer()
                 
-                // 布局切换按钮
-                HStack(spacing: 8) {
-                    ForEach(LayoutMode.allCases) { mode in
-                        Button(action: {
-                            layoutManager.setLayout(mode)
-                        }) {
-                            Image(systemName: mode.icon)
+                // 布局切换按钮和删除按钮
+                HStack(spacing: 12) {
+                    // 分屏模式按钮
+                    Button(action: {
+                        layoutManager.currentLayout = .splitScreen
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(layoutManager.currentLayout == .splitScreen ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                                .frame(width: 40, height: 40)
+                            
+                            Image(systemName: "rectangle.split.2x1")
                                 .font(.system(size: 20))
-                                .foregroundColor(layoutManager.currentLayout == mode ? .blue : .gray)
-                                .padding(8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(layoutManager.currentLayout == mode ? Color.blue.opacity(0.2) : Color.clear)
-                                )
+                                .foregroundColor(layoutManager.currentLayout == .splitScreen ? Color.blue : Color.gray)
                         }
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // 画布全屏按钮
+                    Button(action: {
+                        layoutManager.currentLayout = .fullCanvasWithPreview
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(layoutManager.currentLayout == .fullCanvasWithPreview ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                                .frame(width: 40, height: 40)
+                            
+                            Image(systemName: "rectangle.leftthird.inset.filled")
+                                .font(.system(size: 20))
+                                .foregroundColor(layoutManager.currentLayout == .fullCanvasWithPreview ? Color.blue : Color.gray)
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // 清空画板按钮
+                    Button(action: clearCanvas) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.gray.opacity(0.1))
+                                .frame(width: 40, height: 40)
+                            
+                            Image(systemName: "trash")
+                                .font(.system(size: 20))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                
-                // 清空画板按钮
-                Button(action: clearCanvas) {
-                    Image(systemName: "trash")
-                }
-                .padding(.leading, 4)
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
             
             // 主内容区域
             GeometryReader { geometry in
-                switch layoutManager.currentLayout {
-                case .splitScreen:
-                    HStack(spacing: 0) {
-                        // 左侧画布
-                        CanvasView(canvasImage: $canvasImage, onDrawingChanged: { image in
-                            canvasImage = image
-                            updateCurrentProject()
-                        })
-                        .frame(width: geometry.size.width * layoutManager.canvasRatio)
-                        .contentShape(Rectangle()) // 确保整个区域可响应点击
-                        
-                        // 只保留中间分割线
-                        Divider()
-                        
-                        // 右侧AI生成
-                        ZStack {
-                            // 添加白色背景，确保不会看到下层视图
-                            Color.white
-                                .edgesIgnoringSafeArea(.all)
-                            
-                            AIGenerationView(
-                                inputImage: $canvasImage,
-                                externalPrompt: prompt
-                            )
-                        }
-                        .frame(width: geometry.size.width * (1 - layoutManager.canvasRatio))
-                        .contentShape(Rectangle())
-                        // 移除任何可能的边框或背景样式
-                        .background(Color.clear)
-                    }
-                    // 移除整体的填充
-                    .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
-                    
-                case .fullCanvasWithPreview:
-                    ZStack {
-                        // 全屏画布
-                        CanvasView(canvasImage: $canvasImage, onDrawingChanged: { image in
-                            canvasImage = image
-                            updateCurrentProject()
-                        })
-                        .contentShape(Rectangle()) // 确保整个区域可响应点击
-                        .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
-                        
-                        // 右下角预览窗口
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                ZStack {
-                                    // 白色背景
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.white)
-                                    
-                                    AIGenerationView(
-                                        inputImage: $canvasImage,
-                                        externalPrompt: prompt
-                                    )
-                                }
-                                .frame(width: 200, height: 250)
-                                .shadow(radius: 2) // 只保留轻微阴影
-                                .padding(16) // 仅保留适当的边距
+                VStack(spacing: 0) {
+                    if layoutManager.currentLayout == .splitScreen {
+                        // 分屏模式视图
+                        SplitScreenView(
+                            geometry: geometry,
+                            canvasImage: $canvasImage,
+                            canvasRatio: layoutManager.canvasRatio,
+                            prompt: prompt,
+                            onCanvasChange: { image in
+                                canvasImage = image
+                                saveCurrentProject()
                             }
-                        }
+                        )
+                    } else {
+                        // 全屏画布视图
+                        FullCanvasView(
+                            canvasImage: $canvasImage,
+                            onCanvasChange: { image in
+                                canvasImage = image
+                                saveCurrentProject()
+                            },
+                            onSwitchToSplitScreen: {
+                                layoutManager.currentLayout = .splitScreen
+                            }
+                        )
                     }
+                }
+                .onChange(of: layoutManager.currentLayout) { _, _ in
+                    print("布局已变更: \(layoutManager.currentLayout.displayName)")
                 }
             }
         }
@@ -200,26 +200,35 @@ struct ContentView: View {
     }
     
     private func loadProject() {
+        print("ContentView.loadProject - 开始加载项目: \(selectedProject.name)")
         canvasImage = selectedProject.canvasImage
         generatedImage = selectedProject.generatedImage
+        
+        print("ContentView.loadProject - canvasImage: \(canvasImage != nil ? "有值" : "nil"), generatedImage: \(generatedImage != nil ? "有值" : "nil")")
         
         // 延迟设置加载完成，确保视图有足够时间初始化
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.isInitialLoading = false
+            print("ContentView.loadProject - 加载完成, isInitialLoading = false")
         }
     }
     
     private func updateProjectName() {
+        print("ContentView.updateProjectName - 更新项目名称为: \(projectName)")
         selectedProject.name = projectName
     }
     
     private func saveCurrentProject() {
+        print("ContentView.saveCurrentProject - 保存项目: \(selectedProject.name)")
+        
         if let canvasImage = canvasImage {
             selectedProject.setCanvasImage(canvasImage)
+            print("ContentView.saveCurrentProject - 保存了画布图像")
         }
         
         if let generatedImage = generatedImage {
             selectedProject.setGeneratedImage(generatedImage)
+            print("ContentView.saveCurrentProject - 保存了生成图像")
         }
         
         // 保存提示词 - 简化逻辑
@@ -227,11 +236,7 @@ struct ContentView: View {
         
         // 更新时间戳
         selectedProject.updatedAt = Date()
-    }
-    
-    private func updateCurrentProject() {
-        // 自动保存当前项目
-        saveCurrentProject()
+        print("ContentView.saveCurrentProject - 完成保存")
     }
     
     private func exportAsPDF() {
@@ -256,7 +261,7 @@ struct ContentView: View {
         UIGraphicsEndImageContext()
         
         self.canvasImage = blankImage
-        updateCurrentProject()
+        saveCurrentProject()
     }
 }
 
@@ -395,6 +400,94 @@ struct ProjectMenuView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+// 辅助视图组件定义
+private struct SplitScreenView: View {
+    let geometry: GeometryProxy
+    @Binding var canvasImage: UIImage?
+    let canvasRatio: CGFloat
+    let prompt: String
+    let onCanvasChange: (UIImage) -> Void
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            // 左侧画布
+            CanvasView(canvasImage: $canvasImage, onDrawingChanged: onCanvasChange)
+                .frame(width: geometry.size.width * canvasRatio)
+                .contentShape(Rectangle())
+            
+            // 中间分隔线
+            Divider()
+            
+            // 右侧AI生成
+            ZStack {
+                Color.white
+                    .edgesIgnoringSafeArea(.all)
+                
+                AIGenerationView(
+                    inputImage: $canvasImage,
+                    externalPrompt: prompt
+                )
+            }
+            .frame(width: geometry.size.width * (1 - canvasRatio))
+            .contentShape(Rectangle())
+            .background(Color.clear)
+        }
+        .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
+    }
+}
+
+private struct FullCanvasView: View {
+    @Binding var canvasImage: UIImage?
+    let onCanvasChange: (UIImage) -> Void
+    let onSwitchToSplitScreen: () -> Void
+    
+    var body: some View {
+        ZStack {
+            // 画布
+            CanvasView(canvasImage: $canvasImage, onDrawingChanged: onCanvasChange)
+                .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
+            
+            // 预览浮窗
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: onSwitchToSplitScreen) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.white)
+                                .shadow(radius: 3)
+                                .frame(width: 160, height: 160)
+                            
+                            // 使用AIGenerationView但启用小型预览模式
+                            AIGenerationView(
+                                inputImage: $canvasImage,
+                                isSmallPreview: true
+                            )
+                            .frame(width: 150, height: 150)
+                            
+                            // 预览文本提示
+                            VStack {
+                                Spacer()
+                                Text("点击查看")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .padding(.bottom, 5)
+                            }
+                        }
+                        .frame(width: 160, height: 160)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(16)
+                }
+            }
+        }
+        .onAppear {
+            print("全屏画布视图已加载")
         }
     }
 }

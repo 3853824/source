@@ -75,56 +75,60 @@ struct MainView: View {
         } detail: {
             // 详情内容区域
             ZStack {
-                if let selection = selectedItem {
-                    switch selection {
-                    case .home:
-                        HomeView(onSelectProject: { project in
-                            self.selectedProject = project
-                            // 延迟一帧显示内容视图，避免同步更新问题
-                            DispatchQueue.main.async {
-                                self.showingContentView = true
-                            }
-                        })
-                    case .favorites:
-                        Text("收藏夹")
-                            .font(.largeTitle)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    case .settings:
-                        Text("设置")
-                            .font(.largeTitle)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                } else {
-                    // 默认显示主页
-                    HomeView(onSelectProject: { project in
-                        self.selectedProject = project
-                        // 延迟一帧显示内容视图，避免同步更新问题
-                        DispatchQueue.main.async {
-                            self.showingContentView = true
+                if showingContentView, let project = selectedProject {
+                    // 显示内容视图
+                    ContentView(selectedProject: project, onDismiss: {
+                        withAnimation {
+                            print("ContentView被关闭，返回主页")
+                            self.showingContentView = false
+                            self.selectedProject = nil
                         }
                     })
-                }
-                
-                // 使用全屏覆盖显示内容视图
-                if showingContentView, let project = selectedProject {
-                    ContentView(selectedProject: project, onDismiss: {
-                        self.showingContentView = false
-                    })
                     .transition(.opacity)
-                    .zIndex(2) // 确保内容视图在最上层
+                } else {
+                    // 显示主要导航内容
+                    if let selection = selectedItem {
+                        switch selection {
+                        case .home:
+                            HomeView(onSelectProject: { project in
+                                withAnimation {
+                                    print("从HomeView选择项目: \(project.name), ID: \(project.id)")
+                                    self.selectedProject = project
+                                    self.showingContentView = true
+                                    print("已设置showingContentView=true")
+                                }
+                            })
+                            .transition(.opacity)
+                        case .favorites:
+                            Text("收藏夹")
+                                .font(.largeTitle)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        case .settings:
+                            Text("设置")
+                                .font(.largeTitle)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                    } else {
+                        // 默认显示主页
+                        HomeView(onSelectProject: { project in
+                            withAnimation {
+                                print("从默认HomeView选择项目: \(project.name), ID: \(project.id)")
+                                self.selectedProject = project
+                                self.showingContentView = true
+                                print("已设置showingContentView=true")
+                            }
+                        })
+                        .transition(.opacity)
+                    }
                 }
+            }
+            .onChange(of: showingContentView) { _, newValue in
+                print("showingContentView变更为: \(newValue)")
+            }
+            .onChange(of: selectedProject) { _, newValue in
+                print("selectedProject变更为: \(newValue?.name ?? "nil")")
             }
         }
         .navigationSplitViewStyle(.balanced)
-        .fullScreenCover(isPresented: $showingContentView, onDismiss: {
-            // 清除已选项目
-            self.selectedProject = nil
-        }) {
-            if let project = selectedProject {
-                ContentView(selectedProject: project, onDismiss: {
-                    self.showingContentView = false
-                })
-            }
-        }
     }
 } 

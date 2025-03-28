@@ -54,7 +54,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         toolPicker.addObserver(canvasView)
         canvasView.becomeFirstResponder()
         
-        canvasView.allowsFingerDrawing = true
+        canvasView.drawingPolicy = .anyInput
         canvasView.isUserInteractionEnabled = true
         
         return canvasView
@@ -100,7 +100,7 @@ struct CanvasRepresentable: UIViewRepresentable {
         }
         
         // 当画布将要开始接收绘图输入时调用
-        func canvasViewWillBeginUsingTool(_ canvasView: PKCanvasView) {
+        func canvasViewDidBeginUsingTool(_ canvasView: PKCanvasView) {
             print("开始使用绘图工具")
         }
         

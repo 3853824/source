@@ -36,16 +36,17 @@ struct HomeView: View {
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 260, maximum: 320))], spacing: 20) {
                     ForEach(filteredProjects) { project in
-                        Button {
+                        // 点击项目卡片打开项目
+                        Button(action: {
+                            print("点击按钮打开项目: \(project.name), ID: \(project.id)")
                             if let callback = onSelectProject {
-                                // 使用传入的回调
                                 callback(project)
                             }
-                        } label: {
+                        }) {
                             ProjectCard(project: project)
                                 .id(project.id) // 使用固定ID确保稳定性
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(CardButtonStyle())
                         .contextMenu {
                             Button {
                                 contextMenuProject = project
@@ -359,5 +360,15 @@ extension ModelContext {
             print("获取未命名项目时出错: \(error)")
             return 0
         }
+    }
+}
+
+// 添加卡片按钮样式
+struct CardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .brightness(configuration.isPressed ? -0.05 : 0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 } 

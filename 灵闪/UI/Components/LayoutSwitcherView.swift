@@ -15,7 +15,12 @@ struct LayoutSwitcherView: View {
             Spacer()
             
             HStack(spacing: 0) {
-                ForEach(LayoutMode.allCases) { mode in
+                let layoutModes = LayoutMode.allCases
+                ForEach(layoutModes, id: \.id) { mode in
+                    let isSelected = layoutManager.currentLayout == mode
+                    let foregroundColor = isSelected ? Color.blue : Color.gray
+                    let backgroundColor = isSelected ? Color.blue.opacity(0.1) : Color.clear
+                    
                     Button(action: {
                         layoutManager.setLayout(mode)
                     }) {
@@ -27,8 +32,8 @@ struct LayoutSwitcherView: View {
                                 .font(.caption)
                         }
                         .frame(width: 70, height: 56)
-                        .foregroundColor(layoutManager.currentLayout == mode ? .blue : .gray)
-                        .background(layoutManager.currentLayout == mode ? Color.blue.opacity(0.1) : Color.clear)
+                        .foregroundColor(foregroundColor)
+                        .background(backgroundColor)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }

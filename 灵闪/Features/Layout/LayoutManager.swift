@@ -23,7 +23,7 @@ enum LayoutMode: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .splitScreen: return "rectangle.split.2x1"
-        case .fullCanvasWithPreview: return "rectangle.inset.bottomright"
+        case .fullCanvasWithPreview: return "rectangle.leftthird.inset.filled"
         }
     }
 }
@@ -42,7 +42,7 @@ class LayoutManager: ObservableObject {
     }
     
     func setLayout(_ layout: LayoutMode) {
-        currentLayout = layout
+        self.currentLayout = layout
     }
     
     func adjustCanvasRatio(_ delta: CGFloat) {
