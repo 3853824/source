@@ -21,6 +21,7 @@ struct ContentView: View {
     @State private var projectName: String
     @State private var showingProjectMenu = false
     @State private var prompt: String = ""
+    @State private var drawingData: Data?
     
     // 由HomeView传入的项目
     var selectedProject: Project
@@ -40,6 +41,7 @@ struct ContentView: View {
         self.onDismiss = onDismiss
         self._projectName = State(initialValue: selectedProject.name)
         self._prompt = State(initialValue: selectedProject.prompt ?? "")
+        self._drawingData = State(initialValue: selectedProject.drawingData)
         
         // 检查是否为新创建的项目
         if selectedProject.canvasImage == nil && selectedProject.generatedImage == nil {
@@ -153,10 +155,15 @@ struct ContentView: View {
                         SplitScreenView(
                             geometry: geometry,
                             canvasImage: $canvasImage,
+                            drawingData: $drawingData,
                             canvasRatio: layoutManager.canvasRatio,
                             prompt: prompt,
                             onCanvasChange: { image in
                                 canvasImage = image
+                                saveCurrentProject()
+                            },
+                            onDrawingDataChange: { data in
+                                drawingData = data
                                 saveCurrentProject()
                             }
                         )
@@ -164,8 +171,13 @@ struct ContentView: View {
                         // 全屏画布视图
                         FullCanvasView(
                             canvasImage: $canvasImage,
+                            drawingData: $drawingData,
                             onCanvasChange: { image in
                                 canvasImage = image
+                                saveCurrentProject()
+                            },
+                            onDrawingDataChange: { data in
+                                drawingData = data
                                 saveCurrentProject()
                             },
                             onSwitchToSplitScreen: {
@@ -203,8 +215,9 @@ struct ContentView: View {
         print("ContentView.loadProject - 开始加载项目: \(selectedProject.name)")
         canvasImage = selectedProject.canvasImage
         generatedImage = selectedProject.generatedImage
+        drawingData = selectedProject.drawingData
         
-        print("ContentView.loadProject - canvasImage: \(canvasImage != nil ? "有值" : "nil"), generatedImage: \(generatedImage != nil ? "有值" : "nil")")
+        print("ContentView.loadProject - canvasImage: \(canvasImage != nil ? "有值" : "nil"), generatedImage: \(generatedImage != nil ? "有值" : "nil"), drawingData: \(drawingData != nil ? "\(drawingData!.count)字节" : "nil")")
         
         // 延迟设置加载完成，确保视图有足够时间初始化
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -229,6 +242,12 @@ struct ContentView: View {
         if let generatedImage = generatedImage {
             selectedProject.setGeneratedImage(generatedImage)
             print("ContentView.saveCurrentProject - 保存了生成图像")
+        }
+        
+        // 保存绘画数据
+        if let drawingData = drawingData {
+            selectedProject.setDrawingData(drawingData)
+            print("ContentView.saveCurrentProject - 保存了绘画笔迹数据 (\(drawingData.count) 字节)")
         }
         
         // 保存提示词 - 简化逻辑
@@ -408,16 +427,23 @@ struct ProjectMenuView: View {
 private struct SplitScreenView: View {
     let geometry: GeometryProxy
     @Binding var canvasImage: UIImage?
+    @Binding var drawingData: Data?
     let canvasRatio: CGFloat
     let prompt: String
     let onCanvasChange: (UIImage) -> Void
+    let onDrawingDataChange: (Data) -> Void
     
     var body: some View {
         HStack(spacing: 0) {
             // 左侧画布
-            CanvasView(canvasImage: $canvasImage, onDrawingChanged: onCanvasChange)
-                .frame(width: geometry.size.width * canvasRatio)
-                .contentShape(Rectangle())
+            CanvasView(
+                canvasImage: $canvasImage,
+                drawingData: $drawingData,
+                onDrawingChanged: onCanvasChange,
+                onDrawingDataChanged: onDrawingDataChange
+            )
+            .frame(width: geometry.size.width * canvasRatio)
+            .contentShape(Rectangle())
             
             // 中间分隔线
             Divider()
@@ -442,14 +468,21 @@ private struct SplitScreenView: View {
 
 private struct FullCanvasView: View {
     @Binding var canvasImage: UIImage?
+    @Binding var drawingData: Data?
     let onCanvasChange: (UIImage) -> Void
+    let onDrawingDataChange: (Data) -> Void
     let onSwitchToSplitScreen: () -> Void
     
     var body: some View {
         ZStack {
             // 画布
-            CanvasView(canvasImage: $canvasImage, onDrawingChanged: onCanvasChange)
-                .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
+            CanvasView(
+                canvasImage: $canvasImage,
+                drawingData: $drawingData,
+                onDrawingChanged: onCanvasChange,
+                onDrawingDataChanged: onDrawingDataChange
+            )
+            .ignoresSafeArea(edges: [.leading, .trailing, .bottom])
             
             // 预览浮窗
             VStack {

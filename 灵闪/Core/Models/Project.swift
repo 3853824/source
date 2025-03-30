@@ -17,6 +17,7 @@ final class Project {
     var updatedAt: Date
     var canvasData: Data?
     var generatedImageData: Data?
+    var drawingData: Data?
     var prompt: String?
     var aiStyle: String
     var isFavorite: Bool
@@ -48,6 +49,11 @@ final class Project {
     
     func setGeneratedImage(_ image: UIImage) {
         self.generatedImageData = image.jpegData(compressionQuality: 0.8)
+        self.updatedAt = Date()
+    }
+    
+    func setDrawingData(_ data: Data) {
+        self.drawingData = data
         self.updatedAt = Date()
     }
 } 
